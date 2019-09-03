@@ -49,8 +49,18 @@ good enough for most methods, and it is not difficult. Consider the following
 example: 
 
 ```csharp
-    public void ConnectAmp()     {         _amp?.Dispose();         _amp = new Amp();         _amp.Level = 11;     }
-     public void Dispose()     {         _amp?.Dispose();         _effect?.Dispose();     }
+    public void ConnectAmp()
+    {
+        _amp?.Dispose();
+        _amp = new Amp();
+        _amp.Level = 11;
+    }
+    
+    public void Dispose()
+    {
+        _amp?.Dispose();
+        _effect?.Dispose();
+    }
 ```
 
 Assuming the “Amp” class implementation is basic exception safe, this code is 
@@ -64,7 +74,16 @@ also basic exception safe.
 Let’s consider a method that needs work: 
 
 ```csharp
-    public void Config(string path) // BAD     {         var reader = File.OpenText(path);         _effect = new Effect(reader.ReadLine());         _amp = new Amp()         {             Level = int.Parse(reader.ReadLine())         };         reader.Close();     }
+    public void Config(string path) // BAD
+    {
+        var reader = File.OpenText(path);
+        _effect = new Effect(reader.ReadLine());
+        _amp = new Amp()
+        {
+            Level = int.Parse(reader.ReadLine())
+        };
+        reader.Close();
+    }
 ```
 
 If there is an exception after opening the file, the StreamReader is leaked. 
@@ -80,7 +99,17 @@ not safe to call, even if it completes without any exceptions.
 Here is a better version that is basic exception safe: 
 
 ```csharp
-    public void Config(string path) // BASIC     {         _amp?.Dispose();         _effect?.Dispose();         using (var reader = File.OpenText(path))         {             _amp = new Amp();             _amp.Level = int.Parse(reader.ReadLine());             _effect = new Effect(reader.ReadLine());         }     }
+    public void Config(string path) // BASIC
+    {
+        _amp?.Dispose();
+        _effect?.Dispose();
+        using (var reader = File.OpenText(path))
+        {
+            _amp = new Amp();
+            _amp.Level = int.Parse(reader.ReadLine());
+            _effect = new Effect(reader.ReadLine());
+        }
+    }
 ```
 
 As you can see, it is not hard to achieve basic exception safety. 
@@ -92,13 +121,31 @@ object, but any resources the constructor allocated may be leaked. Here is an
 example constructor that needs work: 
 
 ```csharp
-    public Guitar(string effectName, int level) // BAD     {         _effect = new Effect(effectName);         _amp = new Amp() { Level = level };     }
+    public Guitar(string effectName, int level) // BAD
+    {
+        _effect = new Effect(effectName);
+        _amp = new Amp() { Level = level };
+    }
 ```
 
 And here is a better version that is basic exception safe: 
 
 ```csharp
-    public Guitar(int level, string effectName) // BASIC     {         try         {             _amp = new Amp();             _amp.Level = level;             _effect = new Effect(effectName);         }         catch         {             _amp?.Dispose();             _effect?.Dispose();             throw;         }     }
+    public Guitar(int level, string effectName) // BASIC
+    {
+        try
+        {
+            _amp = new Amp();
+            _amp.Level = level;
+            _effect = new Effect(effectName);
+        }
+        catch
+        {
+            _amp?.Dispose();
+            _effect?.Dispose();
+            throw;
+        }
+    }
 ```
 
 If another developer asks (as they do) “Why not call the Guitar class Dispose 
@@ -117,7 +164,21 @@ need to do it for a few high-level methods that are used as commands.
 Here is an example of the ConnectAmp method with strong exception safety added: 
 
 ```csharp
-    public void ConnectAmp() // STRONG     {         Amp tempAmp = new Amp();         try         {             tempAmp.Level = 11;         }         catch         {             tempAmp.Dispose();             throw;         }         _amp?.Dispose();         _amp = tempAmp;     }
+    public void ConnectAmp() // STRONG
+    {
+        Amp tempAmp = new Amp();
+        try
+        {
+            tempAmp.Level = 11;
+        }
+        catch
+        {
+            tempAmp.Dispose();
+            throw;
+        }
+        _amp?.Dispose();
+        _amp = tempAmp;
+    }
 ```
 
 If the new Amp constructor throws, the object is left unmodified. If the set 
@@ -136,7 +197,12 @@ very easy to implement. That category is swap methods. Here is the simplest swap
 method: 
 
 ```csharp
-    public static void Swap<T>(ref T a, ref T b) // NOTHROW     {         T temp = a;         a = b;         b = temp;     }
+    public static void Swap<T>(ref T a, ref T b) // NOTHROW
+    {
+        T temp = a;
+        a = b;
+        b = temp;
+    }
 ```
 
 Swap uses only assignment statements. Assignment statements always succeed and 
@@ -146,7 +212,11 @@ You can build up swap methods that swap more complex objects in place. For
 example: 
 
 ```csharp
-    public static void Swap(Guitar a, Guitar b) // NOTHROW     {         Util.Swap(ref a._amp, ref b._amp);         Util.Swap(ref a._effect, ref b._effect);     }
+    public static void Swap(Guitar a, Guitar b) // NOTHROW
+    {
+        Util.Swap(ref a._amp, ref b._amp);
+        Util.Swap(ref a._effect, ref b._effect);
+    }
 ```
 
 This would allow players to swap guitars without allocating a new guitar. 
@@ -225,7 +295,19 @@ that require disposing.
 Here is an exception neutral version of the ConnectAmp method: 
 
 ```csharp
-    public void ConnectAmp() // STRONG     {         Amp tempAmp = new Amp();         try         {             tempAmp.Level = 11;             Util.Swap(ref _amp, ref tempAmp);         }         finally         {             tempAmp.Dispose();         }     }
+    public void ConnectAmp() // STRONG
+    {
+        Amp tempAmp = new Amp();
+        try
+        {
+            tempAmp.Level = 11;
+            Util.Swap(ref _amp, ref tempAmp);
+        }
+        finally
+        {
+            tempAmp.Dispose();
+        }
+    }
 ```
 
 If setting the Level property throws an exception, the finally block disposes 
