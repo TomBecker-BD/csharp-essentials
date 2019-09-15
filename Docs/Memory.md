@@ -18,6 +18,13 @@ structures. Arrays, dictionaries, and hash-maps of bytes, numbers and strings
 do not require any extra work for memory management — this is a really good 
 reason for using plain-old data structures where possible. 
 
+```csharp
+public class PlainOldData
+{
+    byte[] _data;
+    Dictionary<string, int> _index;
+```
+
 Where it gets sticky is event handlers. If an object A listens for events from 
 object B, object B has a hidden reference to object A so B’s event can call A‘s 
 event handler. Forget to remove A’s event handler, and the garbage collector 
@@ -26,22 +33,43 @@ continue to receive events from B. Object A becomes a zombie object. If you have
 a bug where an event handler is called more times than expected, look for 
 objects that you expected to be deleted but are still receiving events. 
 
-Memory is just one kind of resource. If an object has files open, or a network 
-connection, or is using a thread, or a mutex, when you are done with the object, 
-it needs to release all its open resources. Garbage collection is lazy — it is 
-more efficient to reclaim memory only when the application needs more memory. 
-But the lazy approach does not work well for other kinds of resources. You can 
-have the object release resources when it is finalized by the garbage collector. 
-That is not wrong — it’s good to do just in case. But it means that resources 
-tend to be released at the worst possible time. For example, suppose an 
-application uses several temporary files. When it is done with a file, it 
-removes its reference to the object responsible for the file. When the garbage 
-collector finalizes the object, the object closes the file. But this means the 
-application does not close any of its temporary files until it gets low on 
-memory, so it tries to close all of them at the same time, which causes it to 
-become unresponsive. A better approach is to release non-memory resources as 
-soon as possible. The application runs more smoothly, and it also uses fewer 
-operating system resources. 
+```csharp
+public class ZombieObject
+{
+    IAmp _amp;
+    public ZombieObject(IAmp amp)
+    {
+        _amp = amp;
+        _amp.PropertyChanged += Amp_PropertyChanged;
+    }
+```
+
+Resources such as open files, network connections, threads and mutexes, must be
+released when they are no longer needed. If they are never released, the operating
+system could run out of underlying handles, and it could crash or hang. 
+
+You can ensure a resource is released by adding a finalizer. When the garbage collector
+reclaims an object, it will call the finalizer first, if there is one. The problem with
+finalizers is they don't get called until the application is running low on memory. 
+This means the application holds onto resources longer than it needs to. Also, it can 
+take a significant amount of time to release resources if there are a lot of them. 
+
+```csharp
+public class LazyCleanup
+{
+    SafeMemoryMappedFileHandle _file;
+
+    ~LazyCleanup()
+    {
+        if (_file != null)
+        {
+            _file.Dispose();
+            _file = null;
+        }
+    }
+```
+
+A better approach is to release resources immediately when they are no longer needed. 
 
 Fortunately .NET has the Disposable pattern. If an object listens for events, 
 or if it uses non-memory resources, implement IDisposable. In the Dispose 
@@ -52,27 +80,44 @@ responsible for calling its Dispose method. This leads to a hierarchy of
 objects, where every object is Disposable, because even if it doesn’t have 
 event handlers or non-memory resources, it might have child objects that do. 
 
-Some programmers will say that implementing the Disposable pattern on every 
-object is crazy and you should use weak references. A weak reference is like 
-a regular reference, except it does not prevent garbage collection of the 
-referenced memory. Before following a weak reference the code has to check that 
-it is still valid. There even is a weak event mechanism that uses a weak 
-reference for the target object. Weak references are a good thing. .NET should 
-have used weak references in its implementation of events. Unfortunately, it 
-used strong references. Any .NET application if it is non-trivial will have 
-several event handlers for .NET events that use regular references. Even if it 
-uses weak references as much as possible, it still needs to implement the 
-Disposable pattern. Also, the application will still need to manage non-memory 
-resources. Weak references help only with memory. In practice I find it easier 
-to use regular references.
+```csharp
+public class SmoothCleanup : IDisposable
+{
+    IAmp _amp;
+    SafeMemoryMappedFileHandle _file;
 
-Implementing the Disposable pattern is important for a large application that 
-runs over a long time, where objects have different lifetimes, and resources 
-are opened and need to be released. If an application is simple, runs for a 
-short time, and does just one thing, its memory and resources will be released 
-when the application exits. .NET is great for programming trivial applications. 
-But it also is used frequently for programming very large non-trivial 
-applications. In that case, design the object hierarchy and implement the 
-Disposable boilerplate on all the objects You will be glad you did.
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            if (_amp != null)
+            {
+                _amp.PropertyChanged -= Amp_PropertyChanged;
+                _amp = null;
+            }
+            if (_file != null)
+            {
+                _file.Dispose();
+                _file = null;
+            }
+        }
+    }
+    public void Dispose()
+    {
+        Dispose(true);
+    }
+````
+
+Some programmers will say that implementing the Disposable pattern on every object is 
+crazy and you should use weak references. Unfortunately, most of the .NET APIs use strong 
+references. Even if an application uses weak references as much as possible, it will end 
+up with a mix of weak and strong references. It will need to use the Disposable pattern 
+for the strong references. Also, it will need the Disposable pattern for releasing 
+non-memory resources. 
+
+An application's memory and resources will be released when it exits. If the application 
+is simple, runs for a short time, and does just one thing, you may not need to
+implement the Disposable pattern. But for a non-trivial application, the Disposable 
+pattern is essential. 
 
 Next: Properties

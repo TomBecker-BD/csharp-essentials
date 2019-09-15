@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel;
 
-namespace Essentials.Examples.Properties
+namespace Essentials.Examples
 {
     public class AmpViewModel : INotifyPropertyChanged
     {
