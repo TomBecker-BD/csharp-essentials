@@ -25,11 +25,11 @@ public class PlainOldData
     Dictionary<string, int> _index;
 ```
 
-Where it gets sticky is event handlers. If an object A listens for events from 
-object B, object B has a hidden reference to object A so B’s event can call A‘s 
-event handler. Forget to remove A’s event handler, and the garbage collector 
-thinks A is still in-use. Not only will A’s memory not be reclaimed, A will 
-continue to receive events from B. Object A becomes a zombie object. If you have 
+Where it gets sticky is event handlers. If an object Z listens for events from 
+object A, object A has a hidden reference to object Z so A’s event can call Z‘s 
+event handler. Forget to remove Z’s event handler, and the garbage collector 
+thinks Z is still in-use. Not only will Z’s memory not be reclaimed, Z will 
+continue to receive events from A. Object Z becomes a zombie object. If you have 
 a bug where an event handler is called more times than expected, look for 
 objects that you expected to be deleted but are still receiving events. 
 
@@ -71,14 +71,13 @@ public class LazyCleanup
 
 A better approach is to release resources immediately when they are no longer needed. 
 
+## Disposable Pattern
+
 Fortunately .NET has the Disposable pattern. If an object listens for events, 
 or if it uses non-memory resources, implement IDisposable. In the Dispose 
 method have it remove all its event handlers and close, dispose or otherwise 
 release all its non-memory resources. It should also call Dispose on any other 
-objects that it is responsible for. Every Disposable object must have someone 
-responsible for calling its Dispose method. This leads to a hierarchy of 
-objects, where every object is Disposable, because even if it doesn’t have 
-event handlers or non-memory resources, it might have child objects that do. 
+IDisposable objects that it is responsible for. 
 
 ```csharp
 public class SmoothCleanup : IDisposable
@@ -108,16 +107,48 @@ public class SmoothCleanup : IDisposable
     }
 ````
 
-Some programmers will say that implementing the Disposable pattern on every object is 
-crazy and you should use weak references. Unfortunately, most of the .NET APIs use strong 
-references. Even if an application uses weak references as much as possible, it will end 
-up with a mix of weak and strong references. It will need to use the Disposable pattern 
-for the strong references. Also, it will need the Disposable pattern for releasing 
-non-memory resources. 
+## Application Design
+
+The easiest way to manage Disposable objects is in a tree. Each Disposable object has 
+a single parent that is responsible for disposing it. If multiple objects have references
+to the same Disposable object, only one of them is the parent and gets to call Dispose. 
+The other objects may use the Disposable object, but they don't own it. 
+
+Depending on the application, there may be multiple trees of Disposable objects. 
+
+In a desktop application, each window may have a Disposable view model that is the root 
+of a tree. The window's DataContext is typed as an object, and the window is really not
+supposed to know the type of its view model. But it can dynamically cast the view model
+to IDisposable. That way it works with any view model type, whether or not it is 
+Disposable. 
+
+```csharp
+IDisposable disposableViewModel = DataContext as IDisposable;
+if (disposableViewModel != null)
+{
+    disposableViewModel.Dispose();
+}
+```
+
+If an application is document-based, a document object is the root of a tree. When a 
+document is closed, calling the document's Dispose method will dispose the whole tree. 
+
+In an ASP.NET application, controller objects are created for each request. Controllers 
+do not live long and generally do not need to subscribe to events. This minimizes the 
+need for disposing in controllers, but if necessary, controllers are Disposable. 
+Depending on the application, other objects such as sessions may need to be the root of a
+Disposable tree. 
+
+## Alternatives and Special Cases
+
+Some programmers may say that implementing the Disposable pattern on every object is 
+crazy and you should use weak references. However, you will still need to use the 
+Disposable pattern for releasing non-memory resources. Also, you will need to deal with 
+.NET APIs that do not use weak events. 
 
 An application's memory and resources will be released when it exits. If the application 
 is simple, runs for a short time, and does just one thing, you may not need to
-implement the Disposable pattern. But for a non-trivial application, the Disposable 
-pattern is essential. 
+implement the Disposable pattern. However, if the code may end up being reused in a 
+non-trivial application, you may want to implement the Disposable pattern anyway. 
 
-Next: Properties
+Next: [Properties](Properties.md)

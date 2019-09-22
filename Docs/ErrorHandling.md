@@ -333,3 +333,5 @@ In C# .NET, in order to write reliable code, you need to write a lot of
 boilerplate. Fortunately, with error handling, most of the boilerplate can be 
 moved into common infrastructure. With the right infrastructure, good error 
 handling is easy. Now if only the infrastructure were built into .NET.
+
+Next: [Exception safety](Exceptions.md)

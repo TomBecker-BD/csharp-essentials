@@ -205,3 +205,5 @@ approach would be an immutable state object.
 Properties in C# .NET are easy, but doing it correctly involves writing a lot of 
 boilerplate. The good news is that writing boilerplate is easy. You just need to 
 know which design pattern to choose in each situation.
+
+Next: [Error handling](ErrorHandling.md)
