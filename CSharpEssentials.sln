@@ -11,6 +11,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples", "Examples\Exampl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExamplesTests", "ExamplesTests\ExamplesTests.csproj", "{9C158C5C-CE75-4389-B4EA-5AD2C92F2F45}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{817DEEA3-ED46-4806-A8ED-0C6EA30C188C}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\Exceptions.md = Docs\Exceptions.md
+		Docs\Properties.md = Docs\Properties.md
+		Docs\ErrorHandling.md = Docs\ErrorHandling.md
+		Docs\Memory.md = Docs\Memory.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86

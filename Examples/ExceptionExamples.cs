@@ -71,7 +71,9 @@ namespace Essentials.Examples.Except.BAD
         public void Dispose()
         {
             _amp?.Dispose();
+            _amp = null;
             _effect?.Dispose();
+            _effect = null;
         }
     }
 }
@@ -125,7 +127,9 @@ namespace Essentials.Examples.Except.BASIC
         public void Dispose()
         {
             _amp?.Dispose();
+            _amp = null;
             _effect?.Dispose();
+            _effect = null;
         }
     }
 }
@@ -201,7 +205,9 @@ namespace Essentials.Examples.Except.STRONG
         public void Dispose()
         {
             _amp?.Dispose();
+            _amp = null;
             _effect?.Dispose();
+            _effect = null;
         }
     }
 }
@@ -273,13 +279,29 @@ namespace Essentials.Examples.Except.NEUTRAL
         public void Dispose()
         {
             _amp?.Dispose();
+            _amp = null;
             _effect?.Dispose();
+            _effect = null;
         }
 
         public static void Swap(Guitar a, Guitar b) // NOTHROW
         {
             Util.Swap(ref a._amp, ref b._amp);
             Util.Swap(ref a._effect, ref b._effect);
+        }
+
+        public void Template()
+        {
+            // 1. Create new state objects. 
+            try
+            {
+                // 2. Modify new state objects (may throw). 
+                // 3. Swap new and old state objects (no-throw).
+            }
+            finally
+            {
+                // 4. Delete unused state objects.
+            }
         }
     }
 }

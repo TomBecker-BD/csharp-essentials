@@ -51,7 +51,39 @@ namespace Essentials.Examples
         }
     }
 
-    public class SmoothCleanup : IDisposable
+    public class ZombieFree : IDisposable
+    {
+        IAmp _amp;
+
+        public ZombieFree(IAmp amp)
+        {
+            _amp = amp;
+            _amp.PropertyChanged += Amp_PropertyChanged;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_amp != null)
+                {
+                    _amp.PropertyChanged -= Amp_PropertyChanged;
+                    _amp = null;
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        void Amp_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+        }
+    }
+
+    public class BetterCleanup : IDisposable
     {
         IAmp _amp;
         SafeMemoryMappedFileHandle _file;

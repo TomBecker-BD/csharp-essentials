@@ -132,9 +132,9 @@ it might be simpler to not use a property.
 ## Fields
 
 A quick web search will find a lot of advice to use properties instead of public 
-fields. But properties aren’t magic. A publicly settable field is semantically 
-equivalent to a publicly settable field. Both are thread-unsafe, and both add 
-coupling that causes computational complexity you don’t want in your design. 
+fields. But properties aren’t magic. A publicly settable property is semantically 
+equivalent to a public field. Both are thread-unsafe, and both add coupling that 
+causes computational complexity you don’t want in your design. 
 
 ```csharp
     public int Level;
@@ -158,9 +158,8 @@ semantically equivalent:
 If you don’t need the specific features of a property, prefer a field because it
 is simpler. 
 
-Note that properties can be accessed remotely and fields can’t. If you need to 
-support remoting, fine, use properties, but make them immutable if you can. 
-They will be more reliable and perform better. 
+If you need to use properties, make them immutable if you can. They will be more 
+reliable and perform better. 
 
 ## Using Properties Safely
 
@@ -190,7 +189,7 @@ object both times. For example:
 
 ```csharp
         var amp = guitar.Amp;
-        if (amp.Level > MaxLevel)
+        if (amp.Level < MaxLevel)
         {
             amp.Level = MaxLevel;
         }

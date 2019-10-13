@@ -59,7 +59,9 @@ example:
     public void Dispose()
     {
         _amp?.Dispose();
+        _amp = null;
         _effect?.Dispose();
+        _effect = null;
     }
 ```
 
@@ -241,8 +243,8 @@ is disposed and the old object is kept.
     try
     {
         temp.Initialize();
-        current?.Dispose();
-        current = temp;
+        _current?.Dispose();
+        _current = temp;
     }
     catch (Exception ex)
     {
@@ -262,7 +264,7 @@ And it is easier to test, because the cleanup code is the same for all cases:
     {
         temp = new Thing();
         temp.Initialize();
-        Swap(ref current, ref temp);
+        Swap(ref _current, ref temp);
     }
     finally
     {
@@ -280,15 +282,15 @@ statements based on whether they can throw and whether they allocate resources
 that require disposing. 
 
 ```csharp
-    // Code that may throw exceptions but doesn't require cleanup. 
+    // 1. Create new state objects. 
     try
     {
-        // Code that may throw exceptions and requires cleanup. 
-        // No-throw exception safe code (such as Swap).
+        // 2. Modify new state objects (may throw). 
+        // 3. Swap new and old state objects (no-throw).
     }
     finally
     {
-        // Cleanup code.
+        // 4. Delete unused state objects.
     }
 ```
 
@@ -313,8 +315,8 @@ Here is an exception neutral version of the ConnectAmp method:
 If setting the Level property throws an exception, the finally block disposes 
 ‘tempAmp’. 
 
-In the success case, ‘_amp’ and ‘tempAmp’ are swapped and the finally block 
-disposes the old amp that used to be in ‘_amp’. 
+In the success case, '_amp' and 'tempAmp' are swapped and the finally block 
+disposes the old amp that used to be in '_amp'. 
 
 As you can see, the exception neutral code is shorter and simpler. It has less 
 computational complexity so it is easier to test and debug. It still has strong 

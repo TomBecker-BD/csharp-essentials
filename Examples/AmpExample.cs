@@ -93,6 +93,7 @@ namespace Essentials.Examples
 
         static void SetLevel(Guitar guitar)
         {
+            // Possible race
             const int MaxLevel = 11;
             if (guitar.Amp.Level < MaxLevel)
             {
@@ -103,6 +104,7 @@ namespace Essentials.Examples
         static void SetLevel2(Guitar guitar)
         {
             const int MaxLevel = 11;
+            // Better
             var amp = guitar.Amp;
             if (amp.Level < MaxLevel)
             {
