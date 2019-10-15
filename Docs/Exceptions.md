@@ -282,11 +282,11 @@ statements based on whether they can throw and whether they allocate resources
 that require disposing. 
 
 ```csharp
-    // 1. Create new state objects. 
     try
     {
-        // 2. Modify new state objects (may throw). 
-        // 3. Swap new and old state objects (no-throw).
+        // 1. Create new state objects. 
+        // 2. Modify new state objects. 
+        // 3. Swap new and old state objects.
     }
     finally
     {

@@ -292,10 +292,10 @@ namespace Essentials.Examples.Except.NEUTRAL
 
         public void Template()
         {
-            // 1. Create new state objects. 
             try
             {
-                // 2. Modify new state objects (may throw). 
+                // 1. Create new state objects. 
+                // 2. Modify new state objects. 
                 // 3. Swap new and old state objects (no-throw).
             }
             finally
